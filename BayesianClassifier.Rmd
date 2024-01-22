@@ -44,7 +44,7 @@ Let's now go over the parameters of this function:
 
 `S2D` is the value of $(\Sigma_2)_{12} = (\Sigma_2)_{21}$
 
-If any of this values isn't specified then function assumes the value is taken as $0$
+If any of this values isn't specified then function assumes that the means are $0$ and the variances are $I_2$
 `margins` is a 4 element vector with the limits of the graphic window to be created in the order $(x_{1,min},x_{1,max},x_{2,min},x_{2,max})$. By default, if omitted, `c(-5,5,-5,5)` is taken.
 `labels`is a boolean variable which is set to `TRUE` by default, it determines wether or not the regions are labelled $R_1,R_2$.
 
@@ -52,7 +52,7 @@ If any of this values isn't specified then function assumes the value is taken a
 ```{r BayesianClassifier, warning=FALSE}
 
 BayesClassifier <- 
-function(mu11=0,mu12=0,mu21=0, mu22=0, S11=0,S12=0,S1D=0,S21=0,S22=0,S2D=0, margins = c(-5,5,-5,5), labels = TRUE) {
+function(mu11=0,mu12=0,mu21=0, mu22=0, S11=1,S12=1,S1D=0,S21=1,S22=1,S2D=0, margins = c(-5,5,-5,5), labels = TRUE) {
   mu1 <- c(mu11, mu12)
   mu2 <- c(mu21, mu22)
   Sigma1 <- matrix(c(S11, S1D, S1D, S12), nrow = 2, byrow = TRUE)
@@ -96,23 +96,17 @@ function(mu11=0,mu12=0,mu21=0, mu22=0, S11=0,S12=0,S1D=0,S21=0,S22=0,S2D=0, marg
     y0 <- 0
     if (region_condition(x0, y0)) {
       plot <- plot + annotate("text", x = 0, y = 0, label = TeX("$R_1$"), parse = TRUE, col = "blue", size = 12)
-      stop = 0
-      for (i in 1:length(in_region)) {
-        if (!(region_condition((data$x)[i],(data$y)[i]))){
-          stop <- stop+1
-          if (stop == 7175){
-            plot <- plot +  annotate("text", x = data$x[i] , y = data$y[i], label = TeX("$R_2$"), parse = TRUE, col = "red", size = 12)
-            break}}}
-    } else {
+      indices <- in_region == FALSE
+      coordinatex <- (data[indices,1:2])[5000,1]
+      coordinatey <- (data[indices,1:2])[5000,2]
+      plot <- plot + annotate("text", x = coordinatex , y = coordinatey, label = TeX("$R_2$"), parse = TRUE, col = "red", size = 12)
+      } else {
       plot <- plot +
         annotate("text", x = 0, y = 0, label = TeX("$R_2$"), parse = TRUE, col = "red", size = 12)
-      stop = 0
-      for (i in 1:length(in_region)) {
-        if ((region_condition((data$x)[i],(data$y)[i]))){
-          stop <- stop+1
-          if (stop == 7175){
-            plot <- plot +  annotate("text", x = data$x[i] , y = data$y[i], label = TeX("$R_1$"), parse = TRUE, col = "blue", size = 12)
-            break}}}
+       indices <- in_region == TRUE
+      coordinatex <- (data[indices,1:2])[5000,1]
+      coordinatey <- (data[indices,1:2])[5000,2]
+      plot <- plot + annotate("text", x = coordinatex , y = coordinatey, label = TeX("$R_1$"), parse = TRUE, col = "blue", size = 12)
     }    
   }
   plot}
