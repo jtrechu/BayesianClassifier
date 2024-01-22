@@ -77,14 +77,14 @@ function(mu11=0,mu12=0,mu21=0, mu22=0, S11=1,S12=1,S1D=0,S21=1,S22=1,S2D=0, marg
   y <- seq(margins[3], margins[4], length.out = 350)
   data <- expand.grid(x = x, y = y)
   in_region = c()
-  for (i in 1:length(x)) {
-    for (j in (1:length(y))){
-      in_region[350*(i-1)+j] <- region_condition(x[i],y[j])
+  for (j in 1:length(x)) {
+    for (i in (1:length(y))){
+      in_region[350*(i-1)+j] <- region_condition(x[j],y[i])
     }}
   data$in_region <- in_region
   
   
-  plot <- ggplot(data, aes(x, y, fill = in_region)) +
+  plot <- ggplot(data[,1:2], aes(x, y, fill = in_region)) +
     geom_tile() +
     scale_fill_manual(values = c(rgb(1, 0, 0, alpha = 0.4), rgb(0, 0, 1, alpha = 0.4)), na.value = "white") +
     ggtitle("Critical Regions") +
