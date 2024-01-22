@@ -380,16 +380,17 @@ Bayes’ Classifier.</p>
 <p><code>S21</code> is the value of <span class="math inline">\((\Sigma_2)_{11}\)</span></p>
 <p><code>S22</code> is the value of <span class="math inline">\((\Sigma_2)_{2}\)</span></p>
 <p><code>S2D</code> is the value of <span class="math inline">\((\Sigma_2)_{12} = (\Sigma_2)_{21}\)</span></p>
-<p>If any of this values isn’t specified then function assumes the value
-is taken as <span class="math inline">\(0\)</span> <code>margins</code>
-is a 4 element vector with the limits of the graphic window to be
-created in the order <span class="math inline">\((x_{1,min},x_{1,max},x_{2,min},x_{2,max})\)</span>.
+<p>If any of this values isn’t specified then function assumes that the
+means are <span class="math inline">\(0\)</span> and the variances are
+<span class="math inline">\(I_2\)</span> <code>margins</code> is a 4
+element vector with the limits of the graphic window to be created in
+the order <span class="math inline">\((x_{1,min},x_{1,max},x_{2,min},x_{2,max})\)</span>.
 By default, if omitted, <code>c(-5,5,-5,5)</code> is taken.
 <code>labels</code>is a boolean variable which is set to
 <code>TRUE</code> by default, it determines wether or not the regions
 are labelled <span class="math inline">\(R_1,R_2\)</span>.</p>
 <pre class="r"><code>BayesClassifier &lt;- 
-function(mu11=0,mu12=0,mu21=0, mu22=0, S11=0,S12=0,S1D=0,S21=0,S22=0,S2D=0, margins = c(-5,5,-5,5), labels = TRUE) {
+function(mu11=0,mu12=0,mu21=0, mu22=0, S11=1,S12=1,S1D=0,S21=1,S22=1,S2D=0, margins = c(-5,5,-5,5), labels = TRUE) {
   mu1 &lt;- c(mu11, mu12)
   mu2 &lt;- c(mu21, mu22)
   Sigma1 &lt;- matrix(c(S11, S1D, S1D, S12), nrow = 2, byrow = TRUE)
@@ -414,14 +415,14 @@ function(mu11=0,mu12=0,mu21=0, mu22=0, S11=0,S12=0,S1D=0,S21=0,S22=0,S2D=0, marg
   y &lt;- seq(margins[3], margins[4], length.out = 350)
   data &lt;- expand.grid(x = x, y = y)
   in_region = c()
-  for (i in 1:length(x)) {
-    for (j in (1:length(y))){
-      in_region[350*(i-1)+j] &lt;- region_condition(x[i],y[j])
+  for (j in 1:length(x)) {
+    for (i in (1:length(y))){
+      in_region[350*(i-1)+j] &lt;- region_condition(x[j],y[i])
     }}
   data$in_region &lt;- in_region
   
   
-  plot &lt;- ggplot(data, aes(x, y, fill = in_region)) +
+  plot &lt;- ggplot(data[,1:2], aes(x, y, fill = in_region)) +
     geom_tile() +
     scale_fill_manual(values = c(rgb(1, 0, 0, alpha = 0.4), rgb(0, 0, 1, alpha = 0.4)), na.value = &quot;white&quot;) +
     ggtitle(&quot;Critical Regions&quot;) +
@@ -433,23 +434,17 @@ function(mu11=0,mu12=0,mu21=0, mu22=0, S11=0,S12=0,S1D=0,S21=0,S22=0,S2D=0, marg
     y0 &lt;- 0
     if (region_condition(x0, y0)) {
       plot &lt;- plot + annotate(&quot;text&quot;, x = 0, y = 0, label = TeX(&quot;$R_1$&quot;), parse = TRUE, col = &quot;blue&quot;, size = 12)
-      stop = 0
-      for (i in 1:length(in_region)) {
-        if (!(region_condition((data$x)[i],(data$y)[i]))){
-          stop &lt;- stop+1
-          if (stop == 7175){
-            plot &lt;- plot +  annotate(&quot;text&quot;, x = data$x[i] , y = data$y[i], label = TeX(&quot;$R_2$&quot;), parse = TRUE, col = &quot;red&quot;, size = 12)
-            break}}}
-    } else {
+      indices &lt;- in_region == FALSE
+      coordinatex &lt;- (data[indices,1:2])[5000,1]
+      coordinatey &lt;- (data[indices,1:2])[5000,2]
+      plot &lt;- plot + annotate(&quot;text&quot;, x = coordinatex , y = coordinatey, label = TeX(&quot;$R_2$&quot;), parse = TRUE, col = &quot;red&quot;, size = 12)
+      } else {
       plot &lt;- plot +
         annotate(&quot;text&quot;, x = 0, y = 0, label = TeX(&quot;$R_2$&quot;), parse = TRUE, col = &quot;red&quot;, size = 12)
-      stop = 0
-      for (i in 1:length(in_region)) {
-        if ((region_condition((data$x)[i],(data$y)[i]))){
-          stop &lt;- stop+1
-          if (stop == 7175){
-            plot &lt;- plot +  annotate(&quot;text&quot;, x = data$x[i] , y = data$y[i], label = TeX(&quot;$R_1$&quot;), parse = TRUE, col = &quot;blue&quot;, size = 12)
-            break}}}
+       indices &lt;- in_region == TRUE
+      coordinatex &lt;- (data[indices,1:2])[5000,1]
+      coordinatey &lt;- (data[indices,1:2])[5000,2]
+      plot &lt;- plot + annotate(&quot;text&quot;, x = coordinatex , y = coordinatey, label = TeX(&quot;$R_1$&quot;), parse = TRUE, col = &quot;blue&quot;, size = 12)
     }    
   }
   plot}</code></pre>
@@ -496,7 +491,7 @@ this parameter.</p>
   plot(collected_data[indices_1,1],collected_data[indices_1,2], col = &#39;blue&#39;,ylab = TeX(&quot;$X_2&quot;), xlab = TeX(&quot;$X_1&quot;), xlim = xlim, ylim = ylim)
   points(collected_data[indices_2,1],collected_data[indices_2,2], col = &#39;red&#39;)
   title(&quot;Classification of the given points&quot;)
-  if (labels) {legend(&quot;topright&quot;, legend = c(TeX(&quot;Points in $R_1$&quot;), TeX(&quot;Points $R_2$&quot;)), col = c(&#39;blue&#39;, &#39;red&#39;), pch = 1)}
+  if (labels) {legend(&quot;topright&quot;, legend = c(TeX(&quot;Points in $R_1$&quot;), TeX(&quot;Points in $R_2$&quot;)), col = c(&#39;blue&#39;, &#39;red&#39;), pch = 1)}
   return(collected_data)}</code></pre>
 </div>
 
